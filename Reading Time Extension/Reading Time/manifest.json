@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "Word Counter",
+    "version": "1.2",
+    "description": "动态显示网页的中文和英文字数",
+    "permissions": ["activeTab", "scripting"],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["content.js"],
+            "css": ["styles.css"]
+        }
+    ]
+}
