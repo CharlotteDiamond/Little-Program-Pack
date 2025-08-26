@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职场潜台词理解游戏</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background-color: #c8a2c8;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #b48eb4;
+            transform: translateY(-1px);
+        }
+        
+        .option-item {
+            transition: all 0.2s ease;
+        }
+        
+        .option-item:hover {
+            background-color: #f3e5f5;
+        }
+        
+        .option-item.selected {
+            background-color: #9370db;
+            color: white;
+        }
+        
+        .option-item.correct {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .option-item.wrong {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+        
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- 欢迎界面 -->
+        <div id="welcome-screen" class="text-center">
+            <div class="bg-white rounded-xl p-8 shadow-lg card mb-8">
+                <h1 class="text-3xl font-bold text-purple-600 mb-4">职场潜台词理解游戏</h1>
+                <p class="text-gray-600 mb-6">通过这个游戏，您可以学习识别职场中的潜台词和隐含意思，提高职场沟通能力。</p>
+                <div class="flex justify-center space-x-4 mb-8">
+                    <div class="bg-purple-50 rounded-lg p-4 w-1/3">
+                        <h3 class="font-semibold text-purple-600 mb-2">简单难度</h3>
+                        <p class="text-sm text-gray-500">适合职场新人</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 w-1/3">
+                        <h3 class="font-semibold text-purple-600 mb-2">中等难度</h3>
+                        <p class="text-sm text-gray-500">适合有经验的职场人</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 w-1/3">
+                        <h3 class="font-semibold text-purple-600 mb-2">困难难度</h3>
+                        <p class="text-sm text-gray-500">适合资深职场人士</p>
+                    </div>
+                </div>
+                <div class="flex justify-center space-x-4">
+                    <button onclick="startGame('easy')" class="btn-primary px-6 py-3 rounded-lg font-medium">简单</button>
+                    <button onclick="startGame('medium')" class="btn-primary px-6 py-3 rounded-lg font-medium">中等</button>
+                    <button onclick="startGame('hard')" class="btn-primary px-6 py-3 rounded-lg font-medium">困难</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 题目界面 -->
+        <div id="question-screen" class="hidden">
+            <div class="bg-white rounded-xl p-8 shadow-lg card mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="text-sm text-gray-500" id="progress">第1题/共5题</div>
+                    <div class="text-sm font-medium text-purple-600" id="difficulty-display">简单难度</div>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-4">场景描述</h2>
+                    <p class="text-gray-700 bg-purple-50 p-4 rounded-lg" id="scenario-text"></p>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-4">请选择最合适的解释</h2>
+                    <div class="space-y-3" id="options-container">
+                        <!-- 选项将通过JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div id="feedback-section" class="hidden">
+                <div class="bg-white rounded-xl p-6 shadow-lg card mb-6">
+                    <div class="flex items-start mb-4">
+                        <div id="feedback-icon" class="text-2xl mr-3"></div>
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2" id="feedback-title"></h3>
+                            <p class="text-gray-700" id="feedback-text"></p>
+                        </div>
+                    </div>
+                    <button onclick="nextQuestion()" class="btn-primary w-full py-3 rounded-lg font-medium mt-4">下一题</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果页面 -->
+        <div id="result-screen" class="hidden">
+            <div class="bg-white rounded-xl p-8 shadow-lg card mb-6">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-purple-600 mb-2">测试完成</h1>
+                    <p class="text-gray-600">您的职场潜台词理解能力得分</p>
+                </div>
+                
+                <div class="flex justify-center mb-8">
+                    <div class="bg-purple-50 rounded-full w-32 h-32 flex items-center justify-center pulse">
+                        <span class="text-4xl font-bold text-purple-600" id="score-display">0</span>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4">答题详情</h2>
+                    <div class="space-y-4" id="result-details">
+                        <!-- 答题详情将通过JS动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-center space-x-4">
+                    <button onclick="restartGame()" class="btn-primary px-6 py-3 rounded-lg font-medium">重新开始</button>
+                    <button onclick="chooseDifficulty()" class="bg-white border border-purple-500 text-purple-500 px-6 py-3 rounded-lg font-medium hover:bg-purple-50">选择其他难度</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 题目数据 - 更新后的题目，确保不同难度间有质的变化
+        const questions = {
+            easy: [
+                {
+                    scenario: "会议结束时，经理说：“这个问题我们回头再讨论。”",
+                    options: [
+                        "经理会安排专门时间深入讨论这个问题",
+                        "这是结束当前话题的礼貌说法，可能不会再讨论",
+                        "经理希望你单独找他讨论这个问题",
+                        "经理认为这个问题不重要"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "“回头再讨论”通常是结束当前话题的委婉说法，表示这个问题暂时不会被优先处理，甚至可能不会再被提起。"
+                },
+                {
+                    scenario: "同事对你说：“我尽量完成，但不保证。”",
+                    options: [
+                        "同事会尽力完成任务",
+                        "同事很可能无法按时完成任务",
+                        "同事对任务难度评估不准确",
+                        "同事在争取更多资源"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "当同事说“不保证”时，这是一种降低期望的策略，实际上是在暗示他们很可能无法按时或按要求完成任务。"
+                },
+                {
+                    scenario: "HR在面试中问：“你能接受加班吗？”",
+                    options: [
+                        "公司有严重的加班文化",
+                        "HR想了解你的工作态度",
+                        "这个职位需要经常加班",
+                        "HR在测试你的抗压能力"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "当HR直接询问加班意愿时，通常意味着这个职位有较多加班需求，这是在提前确认你是否能适应这种工作节奏。"
+                },
+                {
+                    scenario: "领导评论你的报告：“写得很详细。”",
+                    options: [
+                        "领导赞赏你的细致工作态度",
+                        "领导认为报告内容过于冗长",
+                        "领导希望你以后都保持这种风格",
+                        "领导没仔细看报告，只是随口评论"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "当领导只强调报告“详细”而不提及内容价值时，通常是在暗示报告过于冗长，缺乏重点，需要精简。"
+                },
+                {
+                    scenario: "团队聚餐时，有人说：“我开车了，不能喝酒。”",
+                    options: [
+                        "对方真的开车了，不能饮酒",
+                        "这是拒绝喝酒的常用借口",
+                        "对方需要保持清醒，稍后还要工作",
+                        "对方酒精过敏，不能喝酒"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "“我开车了”是职场社交中最常用的拒绝饮酒的借口，即使没有开车，人们也常用这个理由来避免喝酒。"
+                }
+            ],
+            medium: [
+                {
+                    scenario: "项目截止日前一周，你向负责技术开发的同事询问进度，他说：“基本完成了，就差一些细节了。”",
+                    options: [
+                        "项目接近完成，只剩少量收尾工作",
+                        "项目可能存在延期风险，实际完成度不高",
+                        "同事对项目质量要求严格，正在打磨细节",
+                        "同事希望你不要过多干涉他的工作进度"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "当 deadlines临近，“就差一些细节”通常是进度严重滞后的委婉说法，实际可能只完成了60%-70%，存在延期风险。"
+                },
+                {
+                    scenario: "客户投诉产品质量问题，你的主管在会议上说：“这个问题我们需要从源头解决，市场部也要参与进来。”",
+                    options: [
+                        "主管希望跨部门协作解决质量问题",
+                        "主管在暗示问题根源可能与市场需求传达有关",
+                        "主管认为质量问题需要市场策略调整来弥补",
+                        "主管想分散责任，避免研发部门单独承担责任"
+                    ],
+                    correctAnswer: 3,
+                    explanation: "当质量问题明显属于研发或生产环节时，主管强调“市场部也要参与”通常是一种分散责任的策略，避免特定部门单独承担客户投诉的压力。"
+                },
+                {
+                    scenario: "你提出一个新的工作流程改进方案，团队讨论时，大多数人表示“这个想法很有创意”，但没有人具体讨论实施细节。",
+                    options: [
+                        "团队认可方案的创新性，需要时间考虑实施细节",
+                        "团队成员对方案不感兴趣，但不好意思直接反对",
+                        "团队希望你进一步完善方案后再讨论实施细节",
+                        "团队认为方案创意很好但不切实际"
+                    ],
+                    correctAnswer: 4,
+                    explanation: "当团队只称赞“有创意”而回避讨论实施细节时，通常表示他们认为方案不切实际或实施成本过高，但又不想直接否定你的积极性。"
+                },
+                {
+                    scenario: "年度预算评审会上，你申请增加团队人员编制，财务总监说：“我们会认真考虑，不过今年整体预算比较紧张。”",
+                    options: [
+                        "财务部门会优先考虑你的人员需求",
+                        "人员编制申请很可能被驳回",
+                        "需要提供更详细的人员需求理由",
+                        "可以通过减少其他预算项目来换取人员编制"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "“预算比较紧张”是财务部门拒绝资源申请的常用委婉说法，尤其是在没有提出替代方案或进一步询问细节的情况下，基本意味着申请不会被批准。"
+                },
+                {
+                    scenario: "你与其他部门合作一个项目，对方项目经理在邮件中写道：“我们理解这个需求，不过根据我们的经验，可能需要调整一下优先级。”",
+                    options: [
+                        "对方认可需求合理性，只是需要调整执行顺序",
+                        "对方希望将你的需求优先级降低",
+                        "对方需要更多时间评估需求可行性",
+                        "对方暗示你的需求存在不合理之处"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "当合作方强调“调整优先级”时，实际上是希望降低你的需求优先级，甚至将其无限期推迟。这是跨部门协作中常见的需求推脱策略。"
+                }
+            ],
+            hard: [
+                {
+                    scenario: "公司宣布收购竞争对手后，CEO在全员大会上说：“这次收购是为了增强我们的市场竞争力，不会影响现有团队结构。”一个月后，你的直接领导私下告诉你：“你可以多了解一下新公司的业务，对你未来发展有好处。”",
+                    options: [
+                        "领导真心为你的职业发展提供建议",
+                        "你的职位可能在重组中被调整或取消",
+                        "公司计划选派你参与收购后的整合工作",
+                        "领导希望你主动申请调往新公司"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "在收购背景下，“多了解新公司业务”通常是职位调整的预警信号。当公司强调“不影响团队结构”时，实际往往会进行人员优化，领导的暗示是让你提前准备。"
+                },
+                {
+                    scenario: "你负责的项目取得重大突破，准备向董事会汇报前，你的导师（公司副总裁）说：“这个成果很重要，但在汇报时，建议多强调团队协作，少提个人贡献。”",
+                    options: [
+                        "导师希望你保持谦逊态度",
+                        "导师担心你过于突出个人会引起同事不满",
+                        "公司可能有高管不希望你获得过多认可",
+                        "导师在提醒你董事会更重视团队合作精神"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "当你的直接成果被要求“少提个人贡献”时，通常暗示有更高层管理者不希望你获得过多认可，可能涉及权力平衡或内部政治考量。导师的建议是在保护你避免成为权力斗争的目标。"
+                },
+                {
+                    scenario: "跨国团队会议上，美国同事直接批评你的方案“不够创新”，而日本同事则说：“这个方案很稳健，或许可以考虑在某些方面加入一些新元素。”",
+                    options: [
+                        "美国同事直率，日本同事委婉，两人都认为方案需要改进",
+                        "美国同事否定方案整体，日本同事认可基础上建议优化",
+                        "美国同事重视创新，日本同事重视风险控制",
+                        "美国同事希望彻底推翻方案，日本同事希望渐进式改进"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "跨文化沟通中，美国人的直接批评和日本人的委婉建议可能表达相同的意思——方案需要改进。理解这种文化差异背后的相同潜台词，对跨国团队协作至关重要。"
+                },
+                {
+                    scenario: "你发现公司产品存在一个潜在安全隐患，上报给主管后，他说：“我知道了，这个问题我们需要全面评估。”两周后没有任何进展，你再次询问时，他说：“正在走流程，你先专注于当前项目。”",
+                    options: [
+                        "公司对安全问题高度重视，正在进行全面评估",
+                        "主管认为隐患不严重，不需要紧急处理",
+                        "上报流程复杂，需要更长时间等待结果",
+                        "主管可能在压制这个问题，避免影响产品上市计划"
+                    ],
+                    correctAnswer: 3,
+                    explanation: "当安全隐患被上报却以“走流程”拖延且被要求“专注当前项目”时，通常表明管理层在权衡隐患暴露的风险与产品上市时间表，可能选择暂时压制问题。这种情况下需谨慎评估职业伦理与法律风险。"
+                },
+                {
+                    scenario: "你收到猎头邮件，对方表示：“我们正在寻找一位有你这种背景的人才，薪资可以商量，但更重要的是这里有更大的发展空间。”",
+                    options: [
+                        "新公司真心欣赏你的背景，愿意提供职业发展机会",
+                        "新公司可能无法提供与你当前匹配的薪资",
+                        "新公司有重要职位空缺，急需填补",
+                        "猎头希望先引起你的兴趣，薪资谈判将处于劣势"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "当猎头强调“发展空间”而模糊薪资时，通常意味着新公司无法提供市场竞争力的薪酬，试图用“未来机会”来弥补当前薪资差距。这是猎头常用的谈判策略，实际“发展空间”可能并不明确。"
+                }
+            ]
+        };
+
+        // 游戏状态
+        let currentDifficulty = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        let selectedOption = null;
+
+        // 开始游戏
+        function startGame(difficulty) {
+            currentDifficulty = difficulty;
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+            
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('question-screen').classList.remove('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            
+            // 设置难度显示
+            let difficultyText = '';
+            switch(difficulty) {
+                case 'easy': difficultyText = '简单难度'; break;
+                case 'medium': difficultyText = '中等难度'; break;
+                case 'hard': difficultyText = '困难难度'; break;
+            }
+            document.getElementById('difficulty-display').textContent = difficultyText;
+            
+            loadQuestion();
+        }
+
+        // 加载题目
+        function loadQuestion() {
+            const question = questions[currentDifficulty][currentQuestionIndex];
+            document.getElementById('scenario-text').textContent = question.scenario;
+            document.getElementById('progress').textContent = `第${currentQuestionIndex + 1}题/共${questions[currentDifficulty].length}题`;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option-item bg-white border border-gray-200 p-4 rounded-lg cursor-pointer';
+                optionElement.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+                optionElement.dataset.index = index;
+                optionElement.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            document.getElementById('feedback-section').classList.add('hidden');
+            selectedOption = null;
+        }
+
+        // 选择选项
+        function selectOption(index) {
+            if (selectedOption !== null) return;
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('.option-item');
+            options.forEach(option => {
+                option.classList.remove('selected');
+                if (parseInt(option.dataset.index) === index) {
+                    option.classList.add('selected');
+                }
+            });
+            
+            // 检查答案
+            const question = questions[currentDifficulty][currentQuestionIndex];
+            const isCorrect = index === question.correctAnswer;
+            if (isCorrect) {
+                score++;
+            }
+            
+            // 记录用户答案
+            userAnswers.push({
+                question: question.scenario,
+                userAnswer: question.options[index],
+                correctAnswer: question.options[question.correctAnswer],
+                explanation: question.explanation,
+                isCorrect: isCorrect
+            });
+            
+            // 显示反馈
+            showFeedback(isCorrect, question.explanation);
+        }
+
+        // 显示反馈
+        function showFeedback(isCorrect, explanation) {
+            const feedbackSection = document.getElementById('feedback-section');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            
+            if (isCorrect) {
+                feedbackIcon.className = 'fas fa-check-circle text-green-500';
+                feedbackTitle.textContent = '回答正确！';
+            } else {
+                feedbackIcon.className = 'fas fa-times-circle text-red-500';
+                feedbackTitle.textContent = '回答错误';
+            }
+            
+            feedbackText.textContent = explanation;
+            feedbackSection.classList.remove('hidden');
+            
+            // 高亮正确和错误选项
+            const question = questions[currentDifficulty][currentQuestionIndex];
+            const options = document.querySelectorAll('.option-item');
+            options.forEach(option => {
+                const optionIndex = parseInt(option.dataset.index);
+                option.classList.remove('correct', 'wrong');
+                if (optionIndex === question.correctAnswer) {
+                    option.classList.add('correct');
+                } else if (optionIndex === selectedOption) {
+                    option.classList.add('wrong');
+                }
+            });
+        }
+
+        // 下一题
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions[currentDifficulty].length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // 显示结果
+        function showResults() {
+            document.getElementById('question-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            // 计算得分
+            const totalQuestions = questions[currentDifficulty].length;
+            const percentage = Math.round((score / totalQuestions) * 100);
+            document.getElementById('score-display').textContent = `${score}/${totalQuestions} (${percentage}%)`;
+            
+            // 显示答题详情
+            const resultDetails = document.getElementById('result-details');
+            resultDetails.innerHTML = '';
+            
+            userAnswers.forEach((answer, index) => {
+                const detailItem = document.createElement('div');
+                detailItem.className = 'bg-gray-50 p-4 rounded-lg';
+                
+                const questionText = document.createElement('p');
+                questionText.className = 'font-medium mb-2';
+                questionText.textContent = `第${index + 1}题: ${answer.question}`;
+                detailItem.appendChild(questionText);
+                
+                const userAnswerText = document.createElement('p');
+                userAnswerText.className = `mb-1 ${answer.isCorrect ? 'text-green-600' : 'text-red-600'}`;
+                userAnswerText.innerHTML = `<span class=\\\"font-medium\\\">您的答案:</span> ${answer.userAnswer} ${answer.isCorrect ? '✓' : '✗'}`;
+                detailItem.appendChild(userAnswerText);
+                
+                const correctAnswerText = document.createElement('p');
+                correctAnswerText.className = 'text-purple-600 mb-1';
+                correctAnswerText.innerHTML = `<span class=\\\"font-medium\\\">正确答案:</span> ${answer.correctAnswer}`;
+                detailItem.appendChild(correctAnswerText);
+                
+                const explanationText = document.createElement('p');
+                explanationText.className = 'text-gray-600 text-sm';
+                explanationText.innerHTML = `<span class=\\\"font-medium\\\">解析:</span> ${answer.explanation}`;
+                detailItem.appendChild(explanationText);
+                
+                resultDetails.appendChild(detailItem);
+            });
+        }
+
+        // 重新开始
+        function restartGame() {
+            startGame(currentDifficulty);
+        }
+
+        // 选择其他难度
+        function chooseDifficulty() {
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('question-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
