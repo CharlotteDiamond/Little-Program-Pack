@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://webapi.amap.com/loader.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1e293b;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        
+        .nav-link {
+            position: relative;
+            padding-bottom: 4px;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #38bdf8, #3b82f6);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(56, 189, 248, 0.15);
+        }
+        
+        .timeline-container {
+            position: relative;
+            padding-left: 50px;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #4A90E2, #5CB8FF);
+            box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: -50px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #FF9900;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #FF9900;
+            z-index: 2;
+        }
+        
+        .timeline-dot::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid white;
+        }
+        
+        .timeline-dot.history {
+            width: 11px;
+            height: 11px;
+            background-color: #4A90E2;
+        }
+        
+        .timeline-dot.history::after {
+            content: '→';
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 8px;
+            border: none;
+        }
+        
+        .timeline-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .company-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .position-title {
+            font-size: 16px;
+            color: #FF9900;
+            margin-bottom: 5px;
+        }
+        
+        .time-period {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .responsibilities {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .responsibilities ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        
+        .responsibilities li {
+            margin-bottom: 5px;
+        }
+        
+        .sub-position {
+            margin-left: 10px;
+            padding-left: 15px;
+            border-left: 2px dotted #FF9900;
+            margin-top: 15px;
+        }
+        
+        .map-marker {
+            width: 20px;
+            height: 20px;
+            background: rgba(56, 189, 248, 0.7);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            position: absolute;
+        }
+        
+        .map-marker::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+        }
+        
+        .highlight-orange {
+            background-color: rgba(249, 115, 22, 0.2);
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .timeline-container {
+                padding-left: 30px;
+            }
+            
+            .timeline-line {
+                left: 15px;
+            }
+            
+            .timeline-dot {
+                left: -30px;
+                width: 18px;
+                height: 18px;
+            }
+            
+            .timeline-dot.history {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .timeline-card {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="glass-card sticky top-0 z-50 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="text-xl font-bold bg-gradient-to-r from-sky-400 to-blue-500 text-transparent bg-clip-text">
+                <i class="fas fa-user-tie mr-2"></i>Resume
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#education" class="nav-link text-slate-600">Education</a>
+                <a href="#work" class="nav-link text-slate-600">Career Experience</a>
+                <a href="#projects" class="nav-link text-slate-600">Project Experience</a>
+                <a href="#map" class="nav-link text-slate-600">World Work Map</a>
+                <a href="#timeline" class="nav-link text-slate-600">Career Timeline</a>
+            </div>
+            <!-- <button id="editBtn" class="bg-gradient-to-r from-sky-400 to-blue-500 text-white px-4 py-2 rounded-lg shadow hover:shadow-lg transition">
+                <i class="fas fa-edit mr-2"></i>Edit
+            </button> -->
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto py-8 px-4">
+        <!-- 学历篇 -->
+        <section id="education" class="mb-16">
+            <div class="glass-card overflow-hidden flex flex-col md:flex-row">
+                <div class="w-full md:w-1/3 bg-slate-100 p-8">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2" id="name">Hedi H.</h2>
+                    <p class="text-slate-600 mb-4" id="title">MSc Computer Science</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Contact</h3>
+                            <p class="text-slate-700" id="phone">138-1234-5678</p>
+                            <p class="text-slate-700" id="email">elizabeth.huston1978 at outlook</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Education Background</h3>
+                            <p class="text-slate-700" id="degree">MSc Computer Science</p>
+                            <p class="text-slate-700" id="university">University of Bath</p>
+                            <p class="text-slate-700" id="graduation">2023-2024</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-full md:w-2/3 bg-white p-8">
+                    <h2 class="text-2xl font-bold text-blue-500 mb-6">Education Background</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-800">University of Bath | Bath, U.K.</h3>
+                            <p class="text-sm text-slate-500 mb-2">Master in Science, Computer Science | Sep 2023 - Oct 2024</p>
+                            <p class="text-slate-700">Courses: Machine Learning, Reinforcement Learning, BCI</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-800">Qingdao University of Technology | Shandong, China</h3>
+                            <p class="text-sm text-slate-500 mb-2">Bachelor in Management, Information Management and Information System | Sep 2019 - Jun 2023</p>
+                            <p class="text-slate-700">Course: Data Structure, Database, C, Python, Java</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 职场工作篇 -->
+        <section id="work" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-sky-400 to-blue-500 text-transparent bg-clip-text">Work Experience</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-card card-hover p-6">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l"></div>
+                    <div class="pl-4">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">Qs Bank | Shandong, China</h3>
+                        <p class="text-sm text-slate-500 mb-4">Information Technology Engineer | July 2025 - Now</p>
+                    </div>
+                </div>
+                
+                <div class="glass-card card-hover p-6">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l"></div>
+                    <div class="pl-4">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">Shanghai Zhangjiang Development Strategy Research Institute | Shanghai, China</h3>
+                        <p class="text-sm text-slate-500 mb-4">Information Statistics Lead, Information Department | May 2023 - Jul 2023</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 项目经验 -->
+        <section id="projects" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-sky-400 to-blue-500 text-transparent bg-clip-text">Project Experience</h2>
+
+           
+            <div class="grid grid-cols-1 gap-8">
+                <div class="glass-card card-hover p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Machine Learning Technologies for Speech Decoding based on Invasive Brain-Computer Interfaces</h3>
+                    <p class="text-sm text-slate-500 mb-4">Feb 2024 - Aug 2024</p>
+                </div>
+                
+                <div class="glass-card card-hover p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Simulate a Lunar Landing Simulator Reinforcement Learning Project Using OpenAI Gym</h3>
+                    <p class="text-sm text-slate-500 mb-4">Apr 2024</p>
+                </div>
+                
+                <div class="glass-card card-hover p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Dynamic Gesture Recognition Control System Based on Raspberry Pi 4</h3>
+                    <p class="text-sm text-slate-500 mb-4">Mar 2024 - Apr 2024</p>
+                </div>
+                
+                <div class="glass-card card-hover p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">A Web Competition Management System Based on Flask+Bootstrap+HTML+MySQL</h3>
+                    <p class="text-sm text-slate-500 mb-4">Jun 2023</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 世界地图工作地点展示 -->
+        <section id="map" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-sky-400 to-blue-500 text-transparent bg-clip-text">Work Location</h2>
+            
+            <div class="glass-card p-6">
+                <div class="h-96 relative" id="mapContainer">
+                    <img src="https://s.coze.cn/t/3POW0x5ssGg/" alt="世界地图" class="w-full h-full object-cover rounded-lg">
+                    
+                    <!-- 标记点 -->
+                    <div class="map-marker" style="top: 45%; left: 75%;" data-city="Bath U.K."></div>
+                    <div class="map-marker" style="top: 40%; left: 20%;" data-city="Shandong China"></div>
+                </div>
+                
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button class="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition" data-city="Bath">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Bath, U.K.
+                    </button>
+                    <button class="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition" data-city="Shandong">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Shandong, China
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 工作时间轴 -->
+        <section id="timeline" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-sky-400 to-blue-500 text-transparent bg-clip-text">Career Timeline</h2>
+            
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Qs Bank | Shandong, China</div>
+                        <div class="position-title">Information Techonology Engineer</div>
+                        <div class="time-period">July 2025 - Now</div>
+                    </div>
+                </div>
+
+                <!-- 2024年 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Creams Cafe | Bath, U.K.</div>
+                        <div class="position-title">Front of the House</div>
+                        <div class="time-period">May 2024 - Sep 2024</div>
+                    </div>
+                </div>
+                
+                <!-- 2023-2025年 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">University of Bath | Bath, U.K.</div>
+                        <div class="position-title">Student Ambassador</div>
+                        <div class="time-period">Nov 2023 - Feb 2025</div>
+                        
+                        <div class="sub-position">
+                            <div class="position-title">Telethon Fundraiser, Advancement Office</div>
+                            <div class="time-period">Oct 2023 - Nov 2023</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2023年 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot history"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Shanghai Zhangjiang Development Strategy Research Institute | Shanghai, China</div>
+                        <div class="position-title">Information Statistics Lead, Information Department</div>
+                        <div class="time-period">May 2023 - Jul 2023</div>
+                        <div class="sub-position">
+                            <div class="position-title">Information Statistics Intern, Information Department</div>
+                            <div class="time-period">Feb 2023 - May 2023</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2021年 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot history"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Zuoyebang Educational Technology (Beijing) Co., Ltd.| Beijing, China</div>
+                        <div class="position-title">User Growth Intern, Product Department</div>
+                        <div class="time-period">Feb 2021 - Apr 2021</div>
+                    </div>
+                </div>
+                
+                <!-- 2020-2021年 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">National Survey Research Center at RUC | Beijing, China</div>
+                        <div class="position-title">Telephone Interviewer, Web Investigate Lab</div>
+                        <div class="time-period">Aug 2020 - Oct 2021</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Essen Intelligent System (Shanghai) Co., Ltd. | Shanghai, China</div>
+                            <div class="position-title">Customer Service Intern, Sales Department</div>
+                            <div class="time-period">Jun 2020 - Mar 2021</div>
+                        </div>
+                    </div>
+                
+                <!-- 2019年 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Blue Boat Global | Shenzhen, China</div>
+                            <div class="position-title">English Translate Intern</div>
+                            <div class="time-period">Nov 2019 - Feb 2019</div>
+                        </div>
+                    </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="company-name">Zibo Lishang Shuxiang Education and Training School Co., Ltd | Shandong, China</div>
+                            <div class="position-title">Teaching Assisant</div>
+                            <div class="time-period">Jul 2019 - Aug 2019</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 编辑抽屉 -->
+    <div class="fixed inset-0 z-50 overflow-hidden hidden" id="editOverlay">
+        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div class="edit-drawer absolute top-0 right-0 w-full max-w-md h-full bg-white shadow-xl">
+            <div class="p-6 h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Edit Resume</h2>
+                    <button id="closeEditBtn" class="text-slate-500 hover:text-slate-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-700 mb-4">Personal Information</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                                <input type="text" id="edit-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Position</label>
+                                <input type="text" id="edit-title" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Tele</label>
+                                <input type="text" id="edit-phone" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
+                                <input type="email" id="edit-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-700 mb-4">Education Background</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Highest Degree</label>
+                                <input type="text" id="edit-degree" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Graduated University</label>
+                                <input type="text" id="edit-university" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Graduated Time<Time></Time></label>
+                                <input type="text" id="edit-graduation" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-700 mb-4">Work Experience</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Position</label>
+                                <input type="text" id="edit-job1-title" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Start-End</label>
+                                <input type="text" id="edit-job1-period" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                                <textarea id="edit-job1-desc" rows="3" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-4">
+                    <button id="cancelEditBtn" class="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button id="saveEditBtn" class="px-6 py-2 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-lg shadow hover:shadow-lg transition">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-slate-100 py-8 mt-12">
+        <div class="container mx-auto px-4 text-center text-slate-600">
+            <p>created by <a href="https://space.coze.cn" class="text-blue-500 hover:text-blue-700">coze space</a></p>
+            <p class="mt-2 text-sm">This page is generated by AI and edited by Hedi.</p>
+        </div>
+    </footer>
+
+    <!-- <script>
+        // 编辑功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 打开编辑抽屉
+            const editBtn = document.getElementById('editBtn');
+            const editOverlay = document.getElementById('editOverlay');
+            const closeEditBtn = document.getElementById('closeEditBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            
+            editBtn.addEventListener('click', function() {
+                // 填充当前数据到编辑表单
+                document.getElementById('edit-name').value = document.getElementById('name').textContent;
+                document.getElementById('edit-title').value = document.getElementById('title').textContent;
+                document.getElementById('edit-phone').value = document.getElementById('phone').textContent;
+                document.getElementById('edit-email').value = document.getElementById('email').textContent;
+                document.getElementById('edit-degree').value = document.getElementById('degree').textContent;
+                document.getElementById('edit-university').value = document.getElementById('university').textContent;
+                document.getElementById('edit-graduation').value = document.getElementById('graduation').textContent;
+                
+                editOverlay.classList.remove('hidden');
+                setTimeout(() => {
+                    document.querySelector('.edit-drawer').classList.add('open');
+                }, 10);
+            });
+            
+            // 关闭编辑抽屉
+            function closeEdit() {
+                document.querySelector('.edit-drawer').classList.remove('open');
+                setTimeout(() => {
+                    editOverlay.classList.add('hidden');
+                }, 300);
+            }
+            
+            closeEditBtn.addEventListener('click', closeEdit);
+            cancelEditBtn.addEventListener('click', closeEdit);
+            editOverlay.querySelector('.absolute.inset-0').addEventListener('click', closeEdit);
+            
+            // 保存编辑
+            document.getElementById('saveEditBtn').addEventListener('click', function() {
+                // 更新页面数据
+                document.getElementById('name').textContent = document.getElementById('edit-name').value;
+                document.getElementById('title').textContent = document.getElementById('edit-title').value;
+                document.getElementById('phone').textContent = document.getElementById('edit-phone').value;
+                document.getElementById('email').textContent = document.getElementById('edit-email').value;
+                document.getElementById('degree').textContent = document.getElementById('edit-degree').value;
+                document.getElementById('university').textContent = document.getElementById('edit-university').value;
+                document.getElementById('graduation').textContent = document.getElementById('edit-graduation').value;
+                
+                // 保存到本地存储
+                localStorage.setItem('resumeData', JSON.stringify({
+                    name: document.getElementById('edit-name').value,
+                    title: document.getElementById('edit-title').value,
+                    phone: document.getElementById('edit-phone').value,
+                    email: document.getElementById('edit-email').value,
+                    degree: document.getElementById('edit-degree').value,
+                    university: document.getElementById('edit-university').value,
+                    graduation: document.getElementById('edit-graduation').value
+                }));
+                
+                closeEdit();
+            });
+            
+            // 从本地存储加载数据
+            const savedData = localStorage.getItem('resumeData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('name').textContent = data.name;
+                document.getElementById('title').textContent = data.title;
+                document.getElementById('phone').textContent = data.phone;
+                document.getElementById('email').textContent = data.email;
+                document.getElementById('degree').textContent = data.degree;
+                document.getElementById('university').textContent = data.university;
+                document.getElementById('graduation').textContent = data.graduation;
+            }
+            
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+            
+            // 滚动渐入动画
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            
+            function checkVisibility() {
+                timelineItems.forEach(item => {
+                    const rect = item.getBoundingClientRect();
+                    const isVisible = (rect.top <= window.innerHeight * 0.8) && (rect.bottom >= 0);
+                    
+                    if(isVisible) {
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateY(0)';
+                    }
+                });
+            }
+            
+            // 初始设置
+            timelineItems.forEach(item => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            });
+            
+            // 初始检查
+            checkVisibility();
+            
+            // 滚动时检查
+            window.addEventListener('scroll', checkVisibility);
+            
+            // 地图标记交互
+            const markers = document.querySelectorAll('.map-marker');
+            const locationButtons = document.querySelectorAll('[data-city]');
+            
+            markers.forEach(marker => {
+                marker.addEventListener('mouseenter', function() {
+                    const city = this.getAttribute('data-city');
+                    this.style.transform = 'rotate(-45deg) scale(1.2)';
+                    
+                    // 高亮对应的按钮
+                    locationButtons.forEach(btn => {
+                        if (btn.getAttribute('data-city') === city) {
+                            btn.classList.add('bg-blue-200');
+                        }
+                    });
+                });
+                
+                marker.addEventListener('mouseleave', function() {
+                    this.style.transform = 'rotate(-45deg) scale(1)';
+                    
+                    // 移除按钮高亮
+                    locationButtons.forEach(btn => {
+                        btn.classList.remove('bg-blue-200');
+                    });
+                });
+            });
+            
+            locationButtons.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    const city = this.getAttribute('data-city');
+                    
+                    // 高亮对应的标记
+                    markers.forEach(marker => {
+                        if (marker.getAttribute('data-city') === city) {
+                            marker.style.transform = 'rotate(-45deg) scale(1.2)';
+                        }
+                    });
+                });
+                
+                btn.addEventListener('mouseleave', function() {
+                    // 恢复标记大小
+                    markers.forEach(marker => {
+                        marker.style.transform = 'rotate(-45deg) scale(1)';
+                    });
+                });
+            });
+        });
+    </script> -->
+</body>
+</html>
