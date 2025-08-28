@@ -267,7 +267,13 @@
                     let symbol = '¥';
                     if (record.currency === 'USD') symbol = '$';
                     if (record.currency === 'GBP') symbol = '£';
-                    const formattedDate = record.date.replace(/\.(\d{1})\./, (match, p1) => `.${parseInt(p1, 10)}.`);
+                    
+                    const dateParts = record.date.split('.');
+                    const year = dateParts[0];
+                    const month = parseInt(dateParts[1], 10); 
+                    const day = dateParts[2];
+                    const formattedDate = `${year}.${month}.${day}`;
+                    
                     data.push([
                         formattedDate,
                         `${symbol}${record.amount.toFixed(3)}`,
@@ -369,7 +375,11 @@
                         
                         // 格式化日期
                         // const formattedDate = record.date.replace(/-/g, '.');
-                        const formattedDate = record.date.replace(/\.(\d{1})\./, (match, p1) => `.${parseInt(p1, 10)}.`);
+                        const dateParts = record.date.split('.');
+                        const year = dateParts[0];
+                        const month = parseInt(dateParts[1], 10); 
+                        const day = dateParts[2];
+                        const formattedDate = `${year}.${month}.${day}`;
                         // 格式化金额和货币
                         let currencySymbol = '¥';
                         if (record.currency === 'USD') currencySymbol = '$';
