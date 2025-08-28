@@ -169,12 +169,6 @@
             </div>
         </div>
     </div>
-
-    <footer class="text-center py-6 text-gray-500 text-sm mt-12">
-        <p>created by <a href="https://space.coze.cn" class="text-indigo-500 hover:underline">coze space</a></p>
-        <p class="mt-1">页面内容均由 AI 生成，仅供参考</p>
-    </footer>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化本地存储
@@ -273,9 +267,9 @@
                     let symbol = '¥';
                     if (record.currency === 'USD') symbol = '$';
                     if (record.currency === 'GBP') symbol = '£';
-                    
+                    const formattedDate = record.date.replace(/\.(\d{1})\./, (match, p1) => `.${parseInt(p1, 10)}.`);
                     data.push([
-                        record.date.replace(/-/g, '.'),
+                        formattedDate,
                         `${symbol}${record.amount.toFixed(3)}`,
                         record.empty,
                         record.note,
