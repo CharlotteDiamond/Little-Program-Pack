@@ -268,7 +268,7 @@
                     if (record.currency === 'USD') symbol = '$';
                     if (record.currency === 'GBP') symbol = '£';
                     
-                    const dateParts = record.date.split('.');
+                    const dateParts = record.date.split('-');
                     const year = dateParts[0];
                     const month = parseInt(dateParts[1], 10); 
                     const day = dateParts[2];
@@ -375,7 +375,7 @@
                         
                         // 格式化日期
                         // const formattedDate = record.date.replace(/-/g, '.');
-                        const dateParts = record.date.split('.');
+                        const dateParts = record.date.split('-');
                         const year = dateParts[0];
                         const month = parseInt(dateParts[1], 10); 
                         const day = dateParts[2];
