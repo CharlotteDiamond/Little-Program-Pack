@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情绪记录表</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: #2d3748;
+            min-height: 100vh;
+        }
+        
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px 0 rgba(31, 38, 135, 0.2);
+        }
+        
+        .emotion-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        
+        .emotion-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            min-width: 80px;
+        }
+        
+        .emotion-option:hover {
+            transform: translateY(-2px);
+            background-color: rgba(243, 244, 246, 0.8);
+        }
+        
+        .emotion-option.selected {
+            transform: translateY(-2px);
+            border-color: #4f46e5;
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+        
+        .emotion-color-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+        
+        .emotion-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .submit-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .entry-appear {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .empty-state {
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+        
+        .empty-state:hover {
+            opacity: 1;
+        }
+        
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .entry-item:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+        
+        .calendar-day.today {
+            background-color: rgba(79, 70, 229, 0.2);
+            font-weight: 600;
+        }
+        
+        .calendar-day.has-entries {
+            font-weight: 600;
+        }
+        
+        .calendar-day.selected {
+            background-color: #4f46e5;
+            color: white;
+        }
+        
+        .calendar-day .emotion-dot {
+            position: absolute;
+            bottom: 4px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        
+        .chart-container {
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="py-8 px-4">
+    <div class="container mx-auto max-w-4xl">
+        <!-- 顶部标题 -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-600">
+                <i class="fas fa-heartbeat mr-2"></i>情绪记录表
+            </h1>
+        </header>
+        
+        <!-- 情绪记录表单区域 -->
+        <div class="glassmorphism p-6 mb-8">
+            <form id="emotionForm" class="space-y-6">
+                <div>
+                    <label for="emotionText" class="block text-sm font-medium text-gray-700 mb-2">记录今天的感受：</label>
+                    <textarea 
+                        id="emotionText" 
+                        class="form-input w-full p-3 border border-gray-200 rounded-lg resize-none h-24" 
+                        placeholder="描述你今天的情绪和相关事件..."
+                        required
+                    ></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">选择情绪（可多选）：</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                        <div class="emotion-option" data-emotion="焦虑" data-color="purple">
+                            <div class="emotion-color-indicator bg-purple-500"></div>
+                            <div class="emotion-name">焦虑</div>
+                        </div>
+                        <div class="emotion-option" data-emotion="后悔" data-color="orange">
+                            <div class="emotion-color-indicator bg-orange-500"></div>
+                            <div class="emotion-name">后悔</div>
+                        </div>
+                        <div class="emotion-option" data-emotion="开心" data-color="yellow">
+                            <div class="emotion-color-indicator bg-yellow-500"></div>
+                            <div class="emotion-name">开心</div>
+                        </div>
+                        <div class="emotion-option" data-emotion="悲伤" data-color="blue">
+                            <div class="emotion-color-indicator bg-blue-500"></div>
+                            <div class="emotion-name">悲伤</div>
+                        </div>
+                        <div class="emotion-option" data-emotion="愤怒" data-color="red">
+                            <div class="emotion-color-indicator bg-red-500"></div>
+                            <div class="emotion-name">愤怒</div>
+                        </div>
+                        <div class="emotion-option" data-emotion="平静" data-color="green">
+                            <div class="emotion-color-indicator bg-green-500"></div>
+                            <div class="emotion-name">平静</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedEmotions" value="">
+                </div>
+                
+                <div class="flex justify-end">
+                    <button 
+                        type="submit" 
+                        class="submit-btn bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
+                    >
+                        <i class="fas fa-plus mr-1"></i> 添加记录
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 日历视图 -->
+            <div class="glassmorphism p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-calendar-alt mr-2 text-indigo-500"></i>
+                    <span id="currentMonth"></span>
+                </h2>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prevMonth" class="text-gray-500 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="todayBtn" class="px-3 py-1 text-sm bg-indigo-100 text-indigo-600 rounded-full hover:bg-indigo-200 transition-colors">
+                        今天
+                    </button>
+                    <button id="nextMonth" class="text-gray-500 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <!-- 日历头部 -->
+                <div class="grid grid-cols-7 mb-2">
+                    <div class="text-center text-sm font-medium text-gray-500">日</div>
+                    <div class="text-center text-sm font-medium text-gray-500">一</div>
+                    <div class="text-center text-sm font-medium text-gray-500">二</div>
+                    <div class="text-center text-sm font-medium text-gray-500">三</div>
+                    <div class="text-center text-sm font-medium text-gray-500">四</div>
+                    <div class="text-center text-sm font-medium text-gray-500">五</div>
+                    <div class="text-center text-sm font-medium text-gray-500">六</div>
+                </div>
+                
+                <!-- 日历主体 -->
+                <div id="calendarDays" class="grid grid-cols-7 gap-1">
+                    <!-- 日历日期将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 情绪曲线图表 -->
+            <div class="glassmorphism p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-chart-line mr-2 text-indigo-500"></i>
+                    情绪记录趋势
+                </h2>
+                <div class="chart-container">
+                    <canvas id="emotionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 情绪记录列表 -->
+        <div class="glassmorphism p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-list-alt mr-2 text-indigo-500"></i>
+                    情绪记录
+                </h2>
+                <div id="currentDateDisplay" class="text-sm text-gray-500">
+                    查看全部记录
+                </div>
+            </div>
+            
+            <div id="emotionList" class="space-y-4">
+                <!-- 空状态提示 -->
+                <div id="emptyState" class="empty-state text-center py-12">
+                    <i class="fas fa-heart text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-400">还没有任何情绪记录，开始记录你的第一条情绪吧</p>
+                </div>
+                
+                <!-- 记录将通过JavaScript动态添加 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 情绪数据存储
+            let emotionEntries = JSON.parse(localStorage.getItem('emotionEntries')) || [];
+            let currentDate = new Date();
+            let selectedDate = null;
+            let emotionChart = null;
+            
+            // 初始化情绪选择器
+            const emotionOptions = document.querySelectorAll('.emotion-option');
+            const selectedEmotionsInput = document.getElementById('selectedEmotions');
+            const selectedEmotions = [];
+            
+            emotionOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const emotion = this.dataset.emotion;
+                    const index = selectedEmotions.indexOf(emotion);
+                    
+                    if (index > -1) {
+                        // 取消选择
+                        selectedEmotions.splice(index, 1);
+                        this.classList.remove('selected');
+                    } else {
+                        // 选择情绪
+                        selectedEmotions.push(emotion);
+                        this.classList.add('selected');
+                    }
+                    
+                    selectedEmotionsInput.value = selectedEmotions.join(',');
+                });
+            });
+            
+            // 表单提交逻辑
+            const emotionForm = document.getElementById('emotionForm');
+            const emotionList = document.getElementById('emotionList');
+            
+            emotionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const emotionText = document.getElementById('emotionText').value;
+                const emotions = selectedEmotions;
+                
+                if (emotions.length === 0) {
+                    alert('请至少选择一种情绪');
+                    return;
+                }
+                
+                // 获取当前时间
+                const now = new Date();
+                const dateKey = now.getFullYear() + '-' + 
+                               String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                               String(now.getDate()).padStart(2, '0');
+                const formattedDate = dateKey + ' ' + 
+                                      String(now.getHours()).padStart(2, '0') + ':' + 
+                                      String(now.getMinutes()).padStart(2, '0');
+                
+                // 创建新的记录
+                const newEntry = {
+                    id: Date.now(),
+                    date: dateKey,
+                    time: formattedDate,
+                    text: emotionText,
+                    emotions: emotions
+                };
+                
+                // 添加到记录数组
+                emotionEntries.unshift(newEntry);
+                
+                // 保存到本地存储
+                localStorage.setItem('emotionEntries', JSON.stringify(emotionEntries));
+                
+                // 更新UI
+                updateEmotionList();
+                updateCalendar();
+                updateEmotionChart();
+                
+                // 重置表单
+                emotionForm.reset();
+                selectedEmotions.length = 0;
+                emotionOptions.forEach(opt => opt.classList.remove('selected'));
+                selectedEmotionsInput.value = '';
+                
+                // 滚动到新添加的记录
+                setTimeout(() => {
+                    const firstEntry = emotionList.querySelector('.entry-item');
+                    if (firstEntry) {
+                        firstEntry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
+            });
+            
+            // 日历功能
+            const currentMonthElement = document.getElementById('currentMonth');
+            const calendarDays = document.getElementById('calendarDays');
+            const prevMonthBtn = document.getElementById('prevMonth');
+            const nextMonthBtn = document.getElementById('nextMonth');
+            const todayBtn = document.getElementById('todayBtn');
+            const currentDateDisplay = document.getElementById('currentDateDisplay');
+            
+            // 初始化日历
+            function initCalendar() {
+                updateCalendarHeader();
+                updateCalendarDays();
+                
+                prevMonthBtn.addEventListener('click', function() {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    updateCalendar();
+                });
+                
+                nextMonthBtn.addEventListener('click', function() {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    updateCalendar();
+                });
+                
+                todayBtn.addEventListener('click', function() {
+                    currentDate = new Date();
+                    selectedDate = null;
+                    currentDateDisplay.textContent = '查看全部记录';
+                    updateCalendar();
+                    updateEmotionList();
+                });
+            }
+            
+            function updateCalendar() {
+                updateCalendarHeader();
+                updateCalendarDays();
+            }
+            
+            function updateCalendarHeader() {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
+                currentMonthElement.textContent = `${year}年${month}月`;
+            }
+            
+            function updateCalendarDays() {
+                calendarDays.innerHTML = '';
+                
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                
+                // 获取当月第一天是星期几
+                const firstDay = new Date(year, month, 1).getDay();
+                
+                // 获取当月的天数
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                // 获取上个月的天数
+                const daysInPrevMonth = new Date(year, month, 0).getDate();
+                
+                // 添加上个月的日期
+                for (let i = firstDay - 1; i >= 0; i--) {
+                    const day = document.createElement('div');
+                    day.className = 'calendar-day text-gray-400';
+                    day.textContent = daysInPrevMonth - i;
+                    calendarDays.appendChild(day);
+                }
+                
+                // 获取今天的日期
+                const today = new Date();
+                const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+                
+                // 添加当月的日期
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const day = document.createElement('div');
+                    const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                    
+                    // 检查是否有记录
+                    const hasEntries = emotionEntries.some(entry => entry.date === dateKey);
+                    
+                    // 检查是否是今天
+                    const isToday = isCurrentMonth && today.getDate() === i;
+                    
+                    // 检查是否被选中
+                    const isSelected = selectedDate === dateKey;
+                    
+                    // 设置类名
+                    day.className = 'calendar-day';
+                    if (hasEntries) day.classList.add('has-entries');
+                    if (isToday) day.classList.add('today');
+                    if (isSelected) day.classList.add('selected');
+                    
+                    day.textContent = i;
+                    
+                    // 添加点击事件
+                    day.addEventListener('click', function() {
+                        selectedDate = dateKey;
+                        currentDateDisplay.textContent = `查看 ${dateKey} 的记录`;
+                        updateCalendarDays();
+                        updateEmotionList();
+                    });
+                    
+                    // 如果有记录，添加情绪点
+                    if (hasEntries) {
+                        const dayEntries = emotionEntries.filter(entry => entry.date === dateKey);
+                        const emotions = [...new Set(dayEntries.flatMap(entry => entry.emotions))];
+                        
+                        // 最多显示3个情绪点
+                        const displayEmotions = emotions.slice(0, 3);
+                        const gap = 20 / (displayEmotions.length + 1);
+                        
+                        displayEmotions.forEach((emotion, index) => {
+                            const dot = document.createElement('div');
+                            dot.className = 'emotion-dot';
+                            
+                            // 根据情绪设置颜色
+                            switch(emotion) {
+                                case '焦虑': dot.style.backgroundColor = '#9c27b0'; break;
+                                case '后悔': dot.style.backgroundColor = '#ff9800'; break;
+                                case '开心': dot.style.backgroundColor = '#ffeb3b'; break;
+                                case '悲伤': dot.style.backgroundColor = '#2196f3'; break;
+                                case '愤怒': dot.style.backgroundColor = '#f44336'; break;
+                                case '平静': dot.style.backgroundColor = '#4caf50'; break;
+                            }
+                            
+                            dot.style.left = `${gap * (index + 1)}%`;
+                            day.appendChild(dot);
+                        });
+                    }
+                    
+                    calendarDays.appendChild(day);
+                }
+                
+                // 计算需要添加多少个下个月的日期以填满网格
+                const remainingDays = 42 - (firstDay + daysInMonth); // 6行7列 = 42个格子
+                
+                // 添加下个月的日期
+                for (let i = 1; i <= remainingDays; i++) {
+                    const day = document.createElement('div');
+                    day.className = 'calendar-day text-gray-400';
+                    day.textContent = i;
+                    calendarDays.appendChild(day);
+                }
+            }
+            
+            // 更新情绪记录列表
+            function updateEmotionList() {
+                emotionList.innerHTML = '';
+                
+                // 根据选择的日期筛选记录
+                let filteredEntries = emotionEntries;
+                if (selectedDate) {
+                    filteredEntries = emotionEntries.filter(entry => entry.date === selectedDate);
+                }
+                
+                // 检查是否有记录
+                if (filteredEntries.length === 0) {
+                    const emptyStateEl = document.createElement('div');
+                    emptyStateEl.id = 'emptyState';
+                    emptyStateEl.className = 'empty-state text-center py-12';
+                    
+                    let emptyText = '还没有任何情绪记录，开始记录你的第一条情绪吧';
+                    if (selectedDate) {
+                        emptyText = `在 ${selectedDate} 没有记录`;
+                    }
+                    
+                    emptyStateEl.innerHTML = `
+                        <i class="fas fa-heart text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-400">${emptyText}</p>
+                    `;
+                    emotionList.appendChild(emptyStateEl);
+                    return;
+                }
+                
+                // 添加记录项
+                filteredEntries.forEach((entry, index) => {
+                    const newEntry = document.createElement('div');
+                    newEntry.className = 'entry-item card-hover bg-white p-4 rounded-lg flex items-start space-x-3 entry-appear';
+                    newEntry.style.animationDelay = `${index * 0.1}s`;
+                    
+                    // 创建情绪标签容器
+                    const emotionsContainer = document.createElement('div');
+                    emotionsContainer.className = 'flex flex-wrap mt-1';
+                    
+                    // 添加情绪标签
+                    entry.emotions.forEach(emotion => {
+                        const emotionTag = document.createElement('div');
+                        emotionTag.className = 'emotion-tag';
+                        
+                        // 根据情绪设置颜色
+                        switch(emotion) {
+                            case '焦虑': 
+                                emotionTag.classList.add('bg-purple-100', 'text-purple-800'); 
+                                break;
+                            case '后悔': 
+                                emotionTag.classList.add('bg-orange-100', 'text-orange-800'); 
+                                break;
+                            case '开心': 
+                                emotionTag.classList.add('bg-yellow-100', 'text-yellow-800'); 
+                                break;
+                            case '悲伤': 
+                                emotionTag.classList.add('bg-blue-100', 'text-blue-800'); 
+                                break;
+                            case '愤怒': 
+                                emotionTag.classList.add('bg-red-100', 'text-red-800'); 
+                                break;
+                            case '平静': 
+                                emotionTag.classList.add('bg-green-100', 'text-green-800'); 
+                                break;
+                        }
+                        
+                        emotionTag.textContent = emotion;
+                        emotionsContainer.appendChild(emotionTag);
+                    });
+                    
+                    // 设置内容区域
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex-1';
+                    
+                    const textParagraph = document.createElement('p');
+                    textParagraph.className = 'text-gray-700 mb-1';
+                    textParagraph.textContent = entry.text;
+                    
+                    const timeSpan = document.createElement('span');
+                    timeSpan.className = 'text-xs text-gray-400';
+                    timeSpan.textContent = entry.time;
+                    
+                    contentDiv.appendChild(textParagraph);
+                    contentDiv.appendChild(emotionsContainer);
+                    contentDiv.appendChild(timeSpan);
+                    
+                    // 设置删除按钮
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn text-gray-400 hover:text-red-500';
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    deleteBtn.addEventListener('click', function() {
+                        // 从数组中移除
+                        emotionEntries = emotionEntries.filter(e => e.id !== entry.id);
+                        
+                        // 保存到本地存储
+                        localStorage.setItem('emotionEntries', JSON.stringify(emotionEntries));
+                        
+                        // 更新UI
+                        newEntry.style.opacity = '0';
+                        newEntry.style.height = '0';
+                        newEntry.style.marginBottom = '0';
+                        newEntry.style.paddingTop = '0';
+                        newEntry.style.paddingBottom = '0';
+                        newEntry.style.overflow = 'hidden';
+                        newEntry.style.transition = 'all 0.3s ease';
+                        
+                        setTimeout(() => {
+                            updateEmotionList();
+                            updateCalendar();
+                            updateEmotionChart();
+                        }, 300);
+                    });
+                    
+                    // 组装新记录项
+                    newEntry.appendChild(contentDiv);
+                    newEntry.appendChild(deleteBtn);
+                    
+                    // 添加到列表
+                    emotionList.appendChild(newEntry);
+                });
+            }
+            
+            // 初始化情绪图表 - 修改为显示每种情绪的每日出现次数
+            function initEmotionChart() {
+                const ctx = document.getElementById('emotionChart').getContext('2d');
+                
+                // 获取最近7天的数据
+                const labels = [];
+                const emotionTypes = ['焦虑', '后悔', '开心', '悲伤', '愤怒', '平静'];
+                const datasets = [];
+                
+                // 准备日期标签
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    
+                    const dayLabel = String(date.getMonth() + 1) + '/' + String(date.getDate());
+                    labels.push(dayLabel);
+                }
+                
+                // 为每种情绪创建数据集
+                emotionTypes.forEach(emotion => {
+                    const data = [];
+                    
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        
+                        const dateKey = date.getFullYear() + '-' + 
+                                       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                                       String(date.getDate()).padStart(2, '0');
+                        
+                        // 计算当天该情绪出现的次数
+                        let count = 0;
+                        emotionEntries.forEach(entry => {
+                            if (entry.date === dateKey && entry.emotions.includes(emotion)) {
+                                count++;
+                            }
+                        });
+                        
+                        data.push(count);
+                    }
+                    
+                    // 根据情绪设置颜色
+                    let borderColor, backgroundColor;
+                    switch(emotion) {
+                        case '焦虑': 
+                            borderColor = '#9c27b0';
+                            backgroundColor = 'rgba(156, 39, 176, 0.1)';
+                            break;
+                        case '后悔': 
+                            borderColor = '#ff9800';
+                            backgroundColor = 'rgba(255, 152, 0, 0.1)';
+                            break;
+                        case '开心': 
+                            borderColor = '#ffeb3b';
+                            backgroundColor = 'rgba(255, 235, 59, 0.1)';
+                            break;
+                        case '悲伤': 
+                            borderColor = '#2196f3';
+                            backgroundColor = 'rgba(33, 150, 243, 0.1)';
+                            break;
+                        case '愤怒': 
+                            borderColor = '#f44336';
+                            backgroundColor = 'rgba(244, 67, 54, 0.1)';
+                            break;
+                        case '平静': 
+                            borderColor = '#4caf50';
+                            backgroundColor = 'rgba(76, 175, 80, 0.1)';
+                            break;
+                    }
+                    
+                    datasets.push({
+                        label: emotion,
+                        data: data,
+                        borderColor: borderColor,
+                        backgroundColor: backgroundColor,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: borderColor,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    });
+                });
+                
+                emotionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 6
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(79, 70, 229, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#fff',
+                                borderWidth: 1,
+                                padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y}次`;
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+            
+            // 更新情绪图表
+            function updateEmotionChart() {
+                if (emotionChart) {
+                    emotionChart.destroy();
+                }
+                initEmotionChart();
+            }
+            
+            // 初始化应用
+            function initApp() {
+                initCalendar();
+                updateEmotionList();
+                initEmotionChart();
+            }
+            
+            // 启动应用
+            initApp();
+        });
+    </script>
+</body>
+</html>
